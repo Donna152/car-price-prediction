@@ -3,7 +3,6 @@ import pandas as pd
 import pickle
 
 # 1. Load the pipeline and the dataframe from .pkl files
-# Ensure 'LinearRegression.pkl' and 'car.pkl' are in the same folder as app.py
 try:
     pipe = pickle.load(open('LinearRegression.pkl', 'rb'))
     df = pickle.load(open('car.pkl', 'rb'))
@@ -30,7 +29,6 @@ kms_driven = st.number_input("Enter Number of Kilometers travelled:", min_value=
 if st.button("Predict Price"):
     try:
         # Create input DataFrame
-        # IMPORTANT: These column names must match the columns the pipeline was trained on
         input_data = pd.DataFrame(
             [[company, model, year, kms_driven, fuel_type]],
             columns=['company', 'name', 'year', 'kms_driven', 'fuel_type']

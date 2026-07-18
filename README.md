@@ -25,7 +25,7 @@ Screenshots of the app in action are available in the [`Results`](./Results) fol
 
 ### 1. Dataset
 
-The project uses **`quikr_car.csv`** (in the [`dataset`](./dataset) folder) — a raw dataset of used car listings scraped from Quikr, containing:
+The project uses **`quikr_car.csv`** (in the [`dataset`](./dataset) folder) — a raw collection of used car listings scraped from Quikr, containing:
 
 | Column | Description |
 |---|---|
@@ -36,35 +36,48 @@ The project uses **`quikr_car.csv`** (in the [`dataset`](./dataset) folder) — 
 | `kms_driven` | Kilometers driven |
 | `fuel_type` | Fuel type (Petrol, Diesel, LPG, etc.) |
 
+The raw file contains **892 listings**.
+
 ### 2. Data Cleaning
 
 The raw dataset was messy and required significant cleaning:
 
 - **`year`** — contained non-year junk values; filtered to numeric-only entries and cast to `int`
 - **`Price`** — contained `"Ask For Price"` placeholder rows; these were dropped, commas were stripped, and the column was cast to `int`
-- **`kms_driven`** — contained values like `"45,000 kms"`; the `"kms"` suffix and commas were stripped, non-numeric rows dropped, and the column cast to `int`
+- **`kms_driven`** — contained values like `"45,000 kms"`; the `"kms"` suffix and commas were stripped, non-numeric rows (including a couple where `"Petrol"` had leaked into this column) were dropped, and the column was cast to `int`
 - **`fuel_type`** — rows with missing values were removed
-- **`name`** — trimmed to the first 3 words (e.g. `"Maruti Suzuki Swift Dzire VXi"` → `"Maruti Suzuki Swift"`) to reduce cardinality
-- The index was reset after row removal, and the cleaned dataset was exported to `cleaned_car.csv`
+- **`name`** — trimmed to the first 3 words (e.g. `"Maruti Suzuki Swift Dzire VXi"` → `"Maruti Suzuki Swift"`) to reduce cardinality and remove spammy/inconsistent naming
+- The index was reset after row removal, leaving **816 clean listings**, exported to `Cleaned_Car_data.csv`
 
 ### 3. Outlier Removal
 
-Boxplots of `year`, `Price`, and `kms_driven` revealed extreme outliers (e.g. a `Price` value in the millions, far beyond the rest of the distribution). Rows with `Price >= 6,000,000` were removed to keep the model from being skewed by unrealistic listings.
+A boxplot of `Price` revealed an extreme outlier (a listing in the millions, far beyond the rest of the distribution). Rows with `Price >= 6,000,000` were removed, bringing the dataset to **815 listings** and giving a tighter, more realistic price distribution.
 
-### 4. Feature Encoding
+### 4. Exploratory Data Analysis (EDA)
+
+Several relationships were visualized to understand what drives price:
+
+- **Correlation heatmap** — a moderate positive correlation between `year` and `Price` (newer cars tend to cost more)
+- **Company vs. Price** (boxplot) — price ranges vary significantly by manufacturer, with certain brands commanding a much higher spread
+- **Year vs. Price** (swarmplot) — more recent model years generally show a wider, higher range of prices
+- **Kms driven vs. Price** (scatter plot, colored by fuel type) — an inverse relationship: prices tend to fall as kilometers driven increases
+- **Fuel type vs. Price** (boxplot) — diesel vehicles generally command higher median prices than petrol
+- **Combined view** — company vs. price, colored by fuel type and sized by year, to see all factors together
+
+### 5. Feature Encoding
 
 - **Categorical features** (`name`, `company`, `fuel_type`) are transformed using **One-Hot Encoding** (`OneHotEncoder`)
 - **Numerical features** (`year`, `kms_driven`) are passed through unchanged
 - A `ColumnTransformer` (`make_column_transformer`) applies this encoding consistently to any new input data
 
-### 5. Model Building
+### 6. Model Building & Tuning
 
-- **Algorithm:** Linear Regression
-- The column transformer and the regression model are combined into a single **`Pipeline`** (`make_pipeline`), so encoding and prediction happen in one step
-- The data was split 80/20 into train and test sets
-- Model performance was evaluated using **R² score** on the test set
+- **Algorithm:** Linear Regression, wrapped together with the `ColumnTransformer` in a single scikit-learn **`Pipeline`** (`make_pipeline`) so encoding and prediction happen in one step
+- **Baseline:** an initial 80/20 train-test split produced **R² = 0.602**, MAE ≈ $132,098, RMSE ≈ $209,308
+- **Random state search:** to find a stronger train/test split, the model was retrained across 1,000 different `random_state` values (90/10 split) and evaluated by R² each time; the best split achieved **R² ≈ 0.899**
+- **K-Fold Cross-Validation:** since a single favorable split can be misleading, 5-fold cross-validation was run on the full pipeline, giving a more realistic **mean R² ≈ 0.64** — with noticeable variance between folds (0.47–0.73), indicating the model's performance is sensitive to how the data is split
 
-### 6. Deployment Preparation
+### 7. Deployment Preparation
 
 The final trained pipeline is serialized with `pickle`:
 
@@ -79,20 +92,20 @@ The Streamlit app loads both files at startup — `car.pkl` to populate the inpu
 
 - **Python**
 - **pandas / numpy** — data cleaning and processing
-- **scikit-learn** — `OneHotEncoder`, `ColumnTransformer`, `LinearRegression`, `Pipeline`
-- **matplotlib / seaborn** — outlier visualization (boxplots)
+- **scikit-learn** — `OneHotEncoder`, `ColumnTransformer`, `LinearRegression`, `Pipeline`, `KFold`/`cross_val_score`
+- **matplotlib / seaborn** — outlier visualization and EDA (boxplots, heatmap, swarmplot, scatter/relplots)
 - **Streamlit** — web app frontend
 - **pickle** — model/data serialization
 
 ## 📁 Project Structure
 
 ```
-car-price-predictor/
+
 ├── app.py                       # Streamlit frontend
 ├── car_price_predictor.ipynb    # Data cleaning, EDA & model-building notebook
 ├── LinearRegression.pkl         # Serialized trained pipeline (encoder + model)
 ├── car.pkl                      # Serialized cleaned car dataframe (for dropdown options)
-├── dataset/                     # Raw dataset (quikr_car.csv)
+├── dataset/                     # archived dataset (quikr_car.csv)
 ├── Results/                     # Screenshots of app results
 ├── requirements.txt             # Python dependencies
 ├── setup.sh                     # Streamlit config setup (for Heroku-style deploys)
@@ -111,7 +124,7 @@ car-price-predictor/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<your-username>/car-price-predictor.git
+   git clone https://github.com/Donna152/car-price-predictor.git
    cd car-price-predictor
    ```
 
@@ -146,15 +159,17 @@ To deploy your own copy:
 - Dataset loading and exploration
 - Data cleaning (fixing `year`, `Price`, `kms_driven` formatting, handling missing values, trimming `name`)
 - Outlier detection and removal via boxplots
+- Exploratory Data Analysis (correlation heatmap, and price relationships with company, year, kms driven, and fuel type)
 - Feature/target split and train-test split
 - One-Hot Encoding setup with `ColumnTransformer`
 - Linear Regression model training inside a scikit-learn `Pipeline`
-- Model evaluation (R² score)
+- Model evaluation (R², MAE, RMSE), a 1,000-iteration random-state search to find the strongest train/test split, and 5-fold cross-validation for a more robust performance estimate
 - Serialization of the final `LinearRegression.pkl` and `car.pkl` used by the Streamlit app
 
 ## 🔮 Possible Improvements
 
-- Try more advanced regression models (Random Forest, Gradient Boosting, XGBoost) and compare R² scores
+- Cross-validation shows meaningful variance across folds (0.47–0.73 R²), suggesting the model would benefit from more data or stronger regularization rather than relying on a single favorable split
+- Try more advanced regression models (Random Forest, Gradient Boosting, XGBoost) and compare cross-validated R² scores
 - Add more features if available (mileage, transmission type, number of owners, engine capacity)
 - Apply regularization (Ridge/Lasso) to reduce overfitting from high-cardinality one-hot encoded features
 - Add input validation in the app to prevent unrealistic combinations (e.g. car name unmatched to company)
