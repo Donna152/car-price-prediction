@@ -169,10 +169,9 @@ To deploy your own copy:
 ## 🔮 Possible Improvements
 
 - Cross-validation shows meaningful variance across folds (0.47–0.73 R²), suggesting the model would benefit from more data or stronger regularization rather than relying on a single favorable split
-- Try more advanced regression models (Random Forest, Gradient Boosting, XGBoost) and compare cross-validated R² scores
-- Add more features if available (mileage, transmission type, number of owners, engine capacity)
+- Future updates will replace the current linear regression with ensemble methods like Random Forest or XGBoost to better capture non-linear pricing trends, particularly in luxury segments
 - Apply regularization (Ridge/Lasso) to reduce overfitting from high-cardinality one-hot encoded features
-- Add input validation in the app to prevent unrealistic combinations (e.g. car name unmatched to company)
+- Enhanced Input Validation: Upcoming UI updates will include strict input validation logic to ensure user-selected combinations (e.g., brand-model-year) are logically consistent and realistic.
 
 ## 📄 License
 
