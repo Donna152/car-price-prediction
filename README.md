@@ -84,9 +84,8 @@ The final trained pipeline is serialized with `pickle`:
 | File | Contents |
 |---|---|
 | `LinearRegression.pkl` | Full trained pipeline (One-Hot Encoding + Linear Regression model) |
-| `car.pkl` | Cleaned car dataframe, used to populate dropdown options (car names, companies, years, fuel types) in the app |
 
-The Streamlit app loads both files at startup — `car.pkl` to populate the input dropdowns, and `LinearRegression.pkl` to make predictions directly from raw input (no manual encoding needed, since it's baked into the pipeline).
+The Streamlit app loads `LinearRegression.pkl` to make predictions directly from raw input (no manual encoding needed, since it's baked into the pipeline).
 
 ## 🛠️ Tech Stack
 
@@ -104,12 +103,9 @@ The Streamlit app loads both files at startup — `car.pkl` to populate the inpu
 ├── app.py                       # Streamlit frontend
 ├── car_price_predictor.ipynb    # Data cleaning, EDA & model-building notebook
 ├── LinearRegression.pkl         # Serialized trained pipeline (encoder + model)
-├── car.pkl                      # Serialized cleaned car dataframe (for dropdown options)
 ├── dataset/                     # archived dataset (quikr_car.csv)
 ├── Results/                     # Screenshots of app results
 ├── requirements.txt             # Python dependencies
-├── setup.sh                     # Streamlit config setup (for Heroku-style deploys)
-├── Procfile                     # Process file for deployment
 ├── .gitignore
 └── README.md
 ```
@@ -133,7 +129,7 @@ The Streamlit app loads both files at startup — `car.pkl` to populate the inpu
    pip install -r requirements.txt
    ```
 
-3. Make sure `LinearRegression.pkl` and `car.pkl` are present in the project root. If not, run through `car_price_predictor.ipynb` to regenerate them from `dataset/quikr_car.csv`.
+3. Make sure `LinearRegression.pkl` and `Cleaned_Car_data.csv` are present in the project root. If not, run through `car_price_predictor.ipynb` to regenerate them from `dataset/quikr_car.csv`.
 
 4. Run the app locally:
    ```bash
@@ -164,14 +160,13 @@ To deploy your own copy:
 - One-Hot Encoding setup with `ColumnTransformer`
 - Linear Regression model training inside a scikit-learn `Pipeline`
 - Model evaluation (R², MAE, RMSE), a 1,000-iteration random-state search to find the strongest train/test split, and 5-fold cross-validation for a more robust performance estimate
-- Serialization of the final `LinearRegression.pkl` and `car.pkl` used by the Streamlit app
+- Serialization of the final `LinearRegression.pkl` used by the Streamlit app
 
 ## 🔮 Possible Improvements
 
 - Cross-validation shows meaningful variance across folds (0.47–0.73 R²), suggesting the model would benefit from more data or stronger regularization rather than relying on a single favorable split
 - Future updates will replace the current linear regression with ensemble methods like Random Forest or XGBoost to better capture non-linear pricing trends, particularly in luxury segments
 - Apply regularization (Ridge/Lasso) to reduce overfitting from high-cardinality one-hot encoded features
-- Enhanced Input Validation: Upcoming UI updates will include strict input validation logic to ensure user-selected combinations (e.g., brand-model-year) are logically consistent and realistic.
 
 ## 📄 License
 
