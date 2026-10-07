@@ -4,7 +4,7 @@ import pickle
 
 # 1. Load the pipeline from the .pkl file and the dataframe from CSV
 try:
-    pipe = pickle.load(open('LinearRegression.pkl', 'rb'))
+    pipe = pickle.load(open('LinearRegressionModel.pkl', 'rb'))
     df = pd.read_csv('Cleaned_Car_data.csv')
 except Exception as e:
     st.error(f"Error loading model or data: {e}")
