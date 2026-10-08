@@ -2,10 +2,10 @@ import streamlit as st
 import pandas as pd
 import pickle
 
-# 1. Load the pipeline from the .pkl file and the dataframe from CSV
+# 1. Load the pipeline and the dataframe from .pkl files
 try:
     pipe = pickle.load(open('LinearRegressionModel.pkl', 'rb'))
-    df = pd.read_csv('Cleaned_Car_data.csv')
+    df = pickle.load(open('car.pkl', 'rb'))
 except Exception as e:
     st.error(f"Error loading model or data: {e}")
     st.stop()
@@ -14,7 +14,7 @@ except Exception as e:
 st.title("Welcome to Car Price Predictor")
 
 # 3. Dynamic Inputs
-# Pulling unique values directly from the CSV dataframe
+# Pulling unique values directly from the unpickled dataframe
 company = st.selectbox("Select Company:", sorted(df['company'].unique()))
 
 # Filter models based on the selected company
@@ -28,10 +28,10 @@ kms_driven = st.number_input("Enter Number of Kilometers travelled:", min_value=
 # 4. Prediction Logic
 if st.button("Predict Price"):
     try:
-        # Create input DataFrame (Note: order matches your training columns: name, company, year, kms_driven, fuel_type)
+        # Create input DataFrame
         input_data = pd.DataFrame(
-            [[model, company, year, kms_driven, fuel_type]],
-            columns=['name', 'company', 'year', 'kms_driven', 'fuel_type']
+            [[company, model, year, kms_driven, fuel_type]],
+            columns=['company', 'name', 'year', 'kms_driven', 'fuel_type']
         )
 
         # Predict
